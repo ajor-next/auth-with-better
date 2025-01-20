@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 export default function AddQuotation() {
-  //const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     quotation_details: "",
@@ -14,6 +13,7 @@ export default function AddQuotation() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null); // For JSON validation
 
   const { data: session, isPending, error: sessionError } = authClient.useSession();
 
@@ -35,6 +35,16 @@ export default function AddQuotation() {
       ...prev,
       [name]: value,
     }));
+
+    // Validate JSON format for quotation_details
+    if (name === "quotation_details") {
+      try {
+        JSON.parse(value);
+        setJsonError(null); // Clear error if valid JSON
+      } catch {
+        setJsonError("Invalid JSON format for Quotation Details");
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,14 +54,24 @@ export default function AddQuotation() {
     setSuccess(null);
 
     try {
-      const response = await fetch("http://localhost:8558/api/quotation/new-quotation", {
+      // Validate JSON before submission
+      let parsedDetails;
+      try {
+        parsedDetails = JSON.parse(formData.quotation_details);
+      } catch {
+        setJsonError("Quotation Details must be a valid JSON object");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await fetch("http://localhost:8787/api/quotation/new-quotation", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           name: formData.name,
-          quotation_details: formData.quotation_details, // Ensure details are valid JSON
+          quotation_details: parsedDetails, // Send as JSON
           total_cost: parseFloat(formData.total_cost),
         }),
         credentials: "include",
@@ -65,9 +85,8 @@ export default function AddQuotation() {
       setSuccess("Quotation added successfully!");
       setFormData({ name: "", quotation_details: "", total_cost: "" }); // Reset form
     } catch (err) {
-        console.log(err);
-        
-      setError(" Failed to add quotation.");
+      console.error(err);
+      setError("Failed to add quotation.");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,8 +123,11 @@ export default function AddQuotation() {
               value={formData.quotation_details}
               onChange={handleChange}
               required
-              className="w-full border border-gray-300 rounded px-4 py-2"
+              className={`w-full border rounded px-4 py-2 ${
+                jsonError ? "border-red-500" : "border-gray-300"
+              }`}
             ></textarea>
+            {jsonError && <div className="text-red-500 mt-2">{jsonError}</div>}
           </div>
           <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2" htmlFor="total_cost">
@@ -125,7 +147,7 @@ export default function AddQuotation() {
           <button
             type="submit"
             className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !!jsonError}
           >
             {isSubmitting ? "Submitting..." : "Add Quotation"}
           </button>

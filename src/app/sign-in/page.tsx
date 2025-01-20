@@ -20,7 +20,12 @@ export default function SignIn() {
         { email, password },
         {
           onRequest: () => console.log("Request initiated..."),
-          onSuccess: () => router.push("/dashboard"),
+          onSuccess: (ctx)=>{
+            const authToken = ctx.response.headers.get("set-auth-token") // get the token from the response headers
+            // Store the token securely (e.g., in localStorage)
+            localStorage.setItem("bearer_token", authToken as string);
+            router.push("/dashboard");
+          },
           onError: (ctx) => setErrorMessage(ctx.error.message || "An error occurred."),
         }
       );

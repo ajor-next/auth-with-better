@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { authClient } from "@/lib/auth-client"; // Import the auth client
 //import AddQuotation from "@/components/AddQuotation";
 import UpdateUserName from "@/components/UpdateUser";
+import AddQuotation from "@/components/AddQuotation";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function Dashboard() {
   const { name, email } = session.user;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex gap-10 items-center justify-center">
+    <div className="min-h-screen bg-gray-100 flex flex-col gap-10 items-center justify-center">
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-sm w-full text-center">
         <div className="w-24 h-24 rounded-full mx-auto mb-4 bg-gray-200 flex items-center justify-center text-gray-400">
           <span className="text-2xl">👤</span>
@@ -73,6 +74,9 @@ export default function Dashboard() {
       </div>
       <div>
         <UpdateUserName />
+      </div>
+      <div>
+        <AddQuotation />
       </div>
     </div>
   );
